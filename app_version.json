@@ -1,14 +1,14 @@
 {
-  "product_id": "sirfbill-printer",
+  "product_id": "sirfbill-restaurant",
   "platform": "windows-x64",
   "channel": "stable",
-  "version": "1.0.1",
-  "latest_version": "1.0.1",
+  "version": "1.0.0",
+  "latest_version": "1.0.0",
   "mandatory": false,
   "is_mandatory": false,
-  "release_notes": "• Improved custom billing & history sync\n• Auto-naming invoice PDFs\n• Performance improvements",
-  "package_url": "https://billbackend.naiyo24.com/downloads/SirfBill_Setup_1.0.1.exe",
-  "download_url": "https://billbackend.naiyo24.com/downloads/SirfBill_Setup_1.0.1.exe",
+  "release_notes": "• SirfBill Restaurant initial Windows release\n• Full KOT, Dine-in Table billing & Thermal printing\n• Auto-updater integration",
+  "package_url": "https://github.com/sayar2121/SirfBill_Restraunt/releases/download/v1.0.0/app-update.zip",
+  "download_url": "https://github.com/sayar2121/SirfBill_Restraunt/releases/download/v1.0.0/Sirfbill_Restaurant_Setup.exe",
   "sha256": "",
   "signature_url": ""
 }
