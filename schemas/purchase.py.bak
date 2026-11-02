@@ -1,0 +1,45 @@
+from pydantic import BaseModel, ConfigDict
+from typing import Optional, List
+from uuid import UUID
+from datetime import datetime, date
+
+class PurchaseBillItemBase(BaseModel):
+    inventory_item_id: Optional[UUID] = None
+    quantity: int
+    free_quantity: int = 0
+    unit_price: float
+    batch_number: Optional[str] = None
+    expiry_date: Optional[date] = None
+    selling_price: Optional[float] = None
+    discount: float = 0.0
+    gst: float = 0.0
+
+class PurchaseBillItemCreate(PurchaseBillItemBase):
+    pass
+
+class PurchaseBillItemOut(PurchaseBillItemBase):
+    id: UUID
+    bill_id: UUID
+
+    model_config = ConfigDict(from_attributes=True)
+
+class PurchaseBillBase(BaseModel):
+    distributor_id: Optional[UUID] = None
+    invoice_no: Optional[str] = None
+    bill_date: date
+    total_amount: float
+    payment_status: str = "PENDING"
+    payment_method: Optional[str] = None
+
+class PurchaseBillCreate(PurchaseBillBase):
+    shop_id: UUID
+    items: List[PurchaseBillItemCreate]
+
+class PurchaseBillOut(PurchaseBillBase):
+    id: UUID
+    shop_id: UUID
+    tenant_id: Optional[UUID] = None
+    created_at: datetime
+    items: List[PurchaseBillItemOut]
+
+    model_config = ConfigDict(from_attributes=True)

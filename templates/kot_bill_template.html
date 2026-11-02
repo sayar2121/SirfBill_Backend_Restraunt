@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>KOT - {{ ticket.ticket_number }}</title>
+<style>
+  @page {
+    size: 80mm auto;
+    margin: 0;
+  }
+  @media print {
+    body {
+      width: 78mm;
+      margin: 0 auto;
+    }
+  }
+  body {
+    width: 78mm;
+    margin: 0 auto;
+    padding: 3mm 2mm 8mm 2mm;
+    font-family: 'Courier New', Courier, monospace;
+    font-size: 12px;
+    line-height: 1.25;
+    color: #000;
+    background: #fff;
+    box-sizing: border-box;
+    -webkit-print-color-adjust: exact;
+  }
+
+  .text-center { text-align: center; }
+  .text-right { text-align: right; }
+  .text-left { text-align: left; }
+  .bold { font-weight: bold; }
+
+  /* Dotted separator line */
+  .dotted-line {
+    border: none;
+    border-top: 1.5px dotted #000;
+    margin: 4px 0;
+  }
+  .double-line {
+    border: none;
+    border-top: 2.5px solid #000;
+    margin: 5px 0;
+  }
+
+  /* Header */
+  .kot-title {
+    font-size: 20px;
+    font-weight: 900;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin: 2px 0;
+  }
+  .station-badge {
+    font-size: 15px;
+    font-weight: bold;
+    border: 2px solid #000;
+    display: inline-block;
+    padding: 2px 8px;
+    margin: 3px 0;
+    text-transform: uppercase;
+  }
+  .reprint-banner {
+    font-size: 13px;
+    font-weight: bold;
+    background: #000;
+    color: #fff;
+    padding: 2px 0;
+    margin: 3px 0;
+    text-align: center;
+  }
+
+  /* Meta table */
+  .meta-table {
+    width: 100%;
+    margin-top: 2px;
+    font-size: 11.5px;
+    border-collapse: collapse;
+  }
+  .meta-table td {
+    padding: 2px 0;
+    vertical-align: top;
+  }
+
+  .table-box {
+    font-size: 18px;
+    font-weight: 900;
+  }
+
+  /* Items table */
+  .items-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 4px 0;
+    font-size: 12px;
+  }
+  .items-table th {
+    padding: 4px 0;
+    font-weight: 900;
+    font-size: 13px;
+    border-top: 1.5px dashed #000;
+    border-bottom: 1.5px dashed #000;
+  }
+  .items-table td {
+    padding: 3px 0;
+    vertical-align: top;
+  }
+
+  .qty-col {
+    width: 20%;
+    font-size: 17px;
+    font-weight: 900;
+    text-align: center;
+  }
+  .item-col {
+    width: 80%;
+    font-size: 13.5px;
+    font-weight: 900;
+  }
+  .variant-tag {
+    font-size: 11px;
+    font-weight: normal;
+  }
+  .modifier-note {
+    font-size: 11px;
+    font-weight: bold;
+    font-style: italic;
+    padding-left: 5px;
+  }
+  .instructions-box {
+    font-size: 11px;
+    font-weight: bold;
+    border: 1px dashed #000;
+    padding: 2px 4px;
+    margin-top: 2px;
+    display: inline-block;
+  }
+
+  /* Footer */
+  .footer-summary {
+    width: 100%;
+    font-size: 12px;
+    margin-top: 3px;
+  }
+  .footer-summary td {
+    padding: 2px 0;
+  }
+  .server-note {
+    font-size: 11px;
+    font-weight: bold;
+    margin-top: 4px;
+  }
+  .kot-number-cell {
+    font-size: 13px;
+  }
+  .th-qty {
+    width: 22%;
+  }
+  .th-item {
+    width: 78%;
+  }
+  .total-qty-val {
+    font-size: 14px;
+  }
+  .kds-footer {
+    font-size: 10.5px;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+  }
+</style>
+</head>
+<body>
+
+  <!-- KOT Title -->
+  <div class="text-center kot-title">K. O. T.</div>
+
+  <!-- Prep Station Badge -->
+  <div class="text-center">
+    <div class="station-badge">STATION: {{ ticket.station }}</div>
+  </div>
+
+  <!-- Reprint Alert if Reprint -->
+  {% if ticket.is_reprint %}
+  <div class="reprint-banner">*** DUPLICATE / REPRINT #{{ ticket.reprint_count }} ***</div>
+  {% endif %}
+
+  <div class="dotted-line"></div>
+
+  <!-- Meta Info -->
+  <table class="meta-table">
+    <tbody>
+      <tr>
+        <td class="table-box">
+          {% if order.order_type == 'DINE_IN' and order.table_code %}
+          TABLE: {{ order.table_code }}
+          {% else %}
+          TYPE: {{ order.order_type | replace('_', ' ') }}
+          {% endif %}
+        </td>
+        <td class="text-right bold kot-number-cell">
+          KOT: {{ ticket.ticket_number }}
+        </td>
+      </tr>
+      <tr>
+        <td>Order No: <b>{{ order.order_number }}</b></td>
+        <td class="text-right">Waiter: <b>{{ server_name or 'Captain' }}</b></td>
+      </tr>
+      <tr>
+        <td colspan="2">Time: {{ ticket.created_at.strftime('%d-%m-%Y %I:%M:%S %p') if ticket.created_at else '' }}</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <!-- Dotted Line -->
+  <div class="dotted-line"></div>
+
+  <!-- Items Table (QTY | ITEM) -->
+  <table class="items-table">
+    <thead>
+      <tr>
+        <th class="text-center th-qty">QTY</th>
+        <th class="text-left th-item">ITEM DESCRIPTION</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% set total_qty = namespace(count=0) %}
+      {% for item in ticket.items %}
+        {% set total_qty.count = total_qty.count + item.quantity %}
+        <tr>
+          <td class="qty-col">{{ item.quantity }}</td>
+          <td class="item-col">
+            {{ item.item_name }}
+            {% if item.variant_name and item.variant_name != 'Standard' %}
+            <span class="variant-tag">({{ item.variant_name }})</span>
+            {% endif %}
+
+            {% if item.modifiers_summary %}
+            <div class="modifier-note">+ {{ item.modifiers_summary }}</div>
+            {% endif %}
+
+            {% if item.special_instructions %}
+            <div>
+              <span class="instructions-box">&#9888; NOTE: {{ item.special_instructions }}</span>
+            </div>
+            {% endif %}
+          </td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  <div class="dotted-line"></div>
+
+  <!-- Summary Qty -->
+  <table class="footer-summary">
+    <tbody>
+      <tr>
+        <td class="bold">TOTAL ITEMS:</td>
+        <td class="text-right bold total-qty-val">{{ total_qty.count }}</td>
+      </tr>
+      {% if order.notes %}
+      <tr>
+        <td colspan="2" class="server-note">Order Instruction: {{ order.notes }}</td>
+      </tr>
+      {% endif %}
+    </tbody>
+  </table>
+
+  <div class="double-line"></div>
+  <div class="text-center bold kds-footer">
+    SirfBill Kitchen Dispatch System
+  </div>
+
+</body>
+</html>

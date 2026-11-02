@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Thermal Bill - {{ order.order_number }}</title>
+<style>
+  @page {
+    size: 80mm auto;
+    margin: 0;
+  }
+  @media print {
+    body {
+      width: 78mm;
+      margin: 0 auto;
+    }
+  }
+  body {
+    width: 78mm;
+    margin: 0 auto;
+    padding: 3mm 2mm 8mm 2mm;
+    font-family: 'Courier New', Courier, monospace, monospace;
+    font-size: 11.5px;
+    line-height: 1.25;
+    color: #000;
+    background: #fff;
+    box-sizing: border-box;
+    -webkit-print-color-adjust: exact;
+  }
+
+  .text-center { text-align: center; }
+  .text-right { text-align: right; }
+  .text-left { text-align: left; }
+  .bold { font-weight: bold; }
+
+  /* Dotted separator lines */
+  .dotted-line {
+    border: none;
+    border-top: 1.5px dotted #000;
+    margin: 4px 0;
+  }
+  .double-line {
+    border: none;
+    border-top: 2px dashed #000;
+    margin: 5px 0;
+  }
+
+  /* Header */
+  .logo-container {
+    text-align: center;
+    margin-bottom: 3px;
+  }
+  .logo-img {
+    max-height: 55px;
+    max-width: 130px;
+    object-fit: contain;
+    filter: grayscale(100%) contrast(150%);
+  }
+  .rest-name {
+    font-size: 16px;
+    font-weight: bold;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    margin: 2px 0;
+  }
+  .rest-address, .rest-contact, .gstin-row {
+    font-size: 10.5px;
+    margin: 1px 0;
+  }
+
+  /* Meta table */
+  .meta-table {
+    width: 100%;
+    margin-top: 2px;
+    font-size: 11px;
+    border-collapse: collapse;
+  }
+  .meta-table td {
+    padding: 1.5px 0;
+    vertical-align: top;
+  }
+
+  .order-type-badge {
+    font-size: 13px;
+    font-weight: bold;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+
+  /* Item table */
+  .item-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 2px 0;
+    font-size: 11px;
+  }
+  .item-table th {
+    padding: 3px 0;
+    font-weight: bold;
+    border-top: 1px dashed #000;
+    border-bottom: 1px dashed #000;
+  }
+  .item-table td {
+    padding: 2.5px 0;
+    vertical-align: top;
+  }
+  .item-name {
+    font-weight: bold;
+    word-break: break-word;
+  }
+  .modifier-subtext {
+    font-size: 9.5px;
+    padding-left: 4px;
+    font-style: italic;
+  }
+
+  /* Summary Table */
+  .summary-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 11px;
+    margin-top: 2px;
+  }
+  .summary-table td {
+    padding: 1.5px 0;
+  }
+
+  .grand-total-row td {
+    font-size: 14px;
+    font-weight: bold;
+    padding: 4px 0;
+    border-top: 1.5px solid #000;
+    border-bottom: 1.5px solid #000;
+  }
+
+  /* Tender / Payment info */
+  .payment-box {
+    margin: 4px 0;
+    padding: 3px 0;
+  }
+
+  /* QR Section */
+  .qr-section {
+    text-align: center;
+    margin: 6px 0 4px 0;
+  }
+  .qr-code-img {
+    width: 115px;
+    height: 115px;
+    display: block;
+    margin: 0 auto;
+  }
+  .qr-instruction {
+    font-size: 9.5px;
+    margin-top: 2px;
+    letter-spacing: 0.2px;
+  }
+  .paid-badge {
+    display: inline-block;
+    border: 2px solid #000;
+    padding: 3px 10px;
+    font-size: 13px;
+    font-weight: bold;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    margin: 4px auto;
+  }
+
+  /* Footer */
+  .powered-by {
+    font-size: 10px;
+    font-weight: bold;
+    letter-spacing: 0.5px;
+    margin-top: 5px;
+  }
+  .thank-you {
+    font-size: 11px;
+    font-weight: bold;
+    margin-top: 2px;
+    text-transform: uppercase;
+  }
+</style>
+</head>
+<body>
+
+  <!-- 1. Restaurant Logo (if available) -->
+  {% if outlet.logo_url %}
+  <div class="logo-container">
+    <img src="{{ outlet.logo_url }}" alt="Logo" class="logo-img">
+  </div>
+  {% endif %}
+
+  <!-- 2. Restaurant Name -->
+  <div class="text-center rest-name">{{ outlet.name }}</div>
+
+  <!-- 3. Address -->
+  {% if outlet.address %}
+  <div class="text-center rest-address">{{ outlet.address }}</div>
+  {% endif %}
+
+  <!-- 4. Phone Number -->
+  {% if outlet.phone %}
+  <div class="text-center rest-contact">Ph: {{ outlet.phone }}</div>
+  {% endif %}
+
+  <!-- 5. GSTIN -->
+  {% if outlet.gst_number %}
+  <div class="text-center gstin-row bold">GSTIN: {{ outlet.gst_number }}</div>
+  {% endif %}
+
+  <!-- 6. Dotted Line -->
+  <div class="dotted-line"></div>
+
+  <!-- 7. Order Type (TAKEAWAY / DINE IN / DELIVERY) & Table Details -->
+  <table class="meta-table">
+    <tr>
+      <td class="bold order-type-badge">TYPE: {{ order.order_type | replace('_', ' ') }}</td>
+      {% if order.order_type == 'DINE_IN' and order.table_code %}
+      <td class="text-right bold" style="font-size: 13px;">TABLE: {{ order.table_code }}</td>
+      {% else %}
+      <td class="text-right bold"></td>
+      {% endif %}
+    </tr>
+    <tr>
+      <td>Bill No: <b>{{ order.order_number }}</b></td>
+      <td class="text-right">Cashier: <b>{{ cashier_name or 'Counter' }}</b></td>
+    </tr>
+    <tr>
+      <td>Date: {{ order.created_at.strftime('%d-%m-%Y %I:%M %p') if order.created_at else '' }}</td>
+      <td class="text-right">
+        {% if order.kot_number %}KOT No: <b>{{ order.kot_number }}</b>{% endif %}
+      </td>
+    </tr>
+    <tr>
+      <td colspan="2">Customer: <b>{{ order.customer_name or 'Walk-in Guest' }}</b>{% if order.customer_phone %} (Ph: {{ order.customer_phone }}){% endif %}</td>
+    </tr>
+  </table>
+
+  <!-- 8. Dotted Line -->
+  <div class="dotted-line"></div>
+
+  <!-- 9. Items Table (ITEM QTY AMT) -->
+  <table class="item-table">
+    <thead>
+      <tr>
+        <th class="text-left" style="width: 58%;">ITEM</th>
+        <th class="text-center" style="width: 14%;">QTY</th>
+        <th class="text-right" style="width: 28%;">AMT</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% set total_qty = namespace(count=0) %}
+      {% for line in order.lines %}
+        {% set total_qty.count = total_qty.count + line.quantity %}
+        <tr>
+          <td class="item-name">
+            {{ line.item_name }}{% if line.variant_name and line.variant_name != 'Standard' %} ({{ line.variant_name }}){% endif %}
+            {% if line.modifiers %}
+            <div class="modifier-subtext">+ {{ line.modifiers }}</div>
+            {% endif %}
+          </td>
+          <td class="text-center">{{ line.quantity }}</td>
+          <td class="text-right">&#8377;{{ "%.2f"|format(line.line_total) }}</td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  <!-- Dotted Line -->
+  <div class="dotted-line"></div>
+
+  <!-- 10. Financial Calculations & GST Breakup -->
+  <table class="summary-table">
+    <tr>
+      <td>Total Qty:</td>
+      <td class="text-right bold">{{ total_qty.count }}</td>
+    </tr>
+    <tr>
+      <td>Sub Total:</td>
+      <td class="text-right">&#8377;{{ "%.2f"|format(order.subtotal) }}</td>
+    </tr>
+    {% if order.discount_amount and order.discount_amount > 0 %}
+    <tr>
+      <td>Discount ({% if order.discount_reason %}{{ order.discount_reason }}{% else %}Special{% endif %}):</td>
+      <td class="text-right">-&#8377;{{ "%.2f"|format(order.discount_amount) }}</td>
+    </tr>
+    {% endif %}
+
+    <!-- GST Breakup (CGST 2.5% + SGST 2.5% for standard 5% restaurant tax) -->
+    {% if order.tax_amount and order.tax_amount > 0 %}
+    {% set half_tax = order.tax_amount / 2 %}
+    <tr>
+      <td>CGST (2.5%):</td>
+      <td class="text-right">&#8377;{{ "%.2f"|format(half_tax) }}</td>
+    </tr>
+    <tr>
+      <td>SGST (2.5%):</td>
+      <td class="text-right">&#8377;{{ "%.2f"|format(half_tax) }}</td>
+    </tr>
+    {% endif %}
+
+    {% if order.rounding_adjustment and order.rounding_adjustment != 0 %}
+    <tr>
+      <td>Round Off:</td>
+      <td class="text-right">{{ "%+.2f"|format(order.rounding_adjustment) }}</td>
+    </tr>
+    {% endif %}
+
+    <tr class="grand-total-row">
+      <td>INVOICE VALUE:</td>
+      <td class="text-right">&#8377;{{ "%.2f"|format(order.grand_total) }}</td>
+    </tr>
+  </table>
+
+  <!-- 11. Payment Status / Tenders -->
+  <div class="payment-box">
+    <table class="summary-table" style="font-size: 10.5px;">
+      <tr>
+        <td>Paid Amount:</td>
+        <td class="text-right bold">&#8377;{{ "%.2f"|format(order.paid_amount) }}</td>
+      </tr>
+      {% if order.tenders %}
+      {% for t in order.tenders %}
+      <tr>
+        <td style="padding-left: 6px;">&bull; {{ t.method }}:</td>
+        <td class="text-right">&#8377;{{ "%.2f"|format(t.amount) }}</td>
+      </tr>
+      {% endfor %}
+      {% endif %}
+
+      {% if order.change_due and order.change_due > 0 %}
+      <tr>
+        <td class="bold">Change Return:</td>
+        <td class="text-right bold">&#8377;{{ "%.2f"|format(order.change_due) }}</td>
+      </tr>
+      {% endif %}
+    </table>
+  </div>
+
+  <div class="dotted-line"></div>
+
+  <!-- 12. Dynamic QR / Already Paid Status -->
+  <div class="qr-section">
+    {% if is_paid or (order.paid_amount >= order.grand_total and order.grand_total > 0) %}
+      <div class="paid-badge">*** ALREADY PAID ***</div>
+      <div class="qr-instruction">Payment settled via {{ primary_payment_mode or 'Digital / Cash' }}</div>
+    {% elif upi_qr_url %}
+      <img src="{{ upi_qr_url }}" alt="UPI QR Code" class="qr-code-img">
+      <div class="qr-instruction bold">SCAN QR WITH ANY UPI APP TO PAY</div>
+      <div class="qr-instruction">Amount: &#8377;{{ "%.2f"|format(balance_due) }}</div>
+    {% else %}
+      <div class="bold" style="font-size: 12px; margin: 4px 0;">PAYMENT DUE: &#8377;{{ "%.2f"|format(balance_due) }}</div>
+    {% endif %}
+  </div>
+
+  <!-- 13. Powered By SirfBill & Thank You Visit Again -->
+  <div class="double-line"></div>
+  <div class="text-center powered-by">Powered by SirfBill</div>
+  <div class="text-center thank-you">Thank You Visit Again !</div>
+
+</body>
+</html>

@@ -1,0 +1,22 @@
+fastapi
+uvicorn
+sqlalchemy
+psycopg2-binary
+python-dotenv
+strawberry-graphql
+strawberry-graphql[fastapi]
+aiofiles
+python-multipart
+alembic
+httpx
+
+PyJWT
+pypdf
+reportlab
+razorpay==1.4.1
+setuptools<70
+
+# PDF & Excel Generation
+python-calamine
+jinja2
+weasyprint

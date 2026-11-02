@@ -1,0 +1,14 @@
+{
+  "product_id": "sirfbill-printer",
+  "platform": "windows-x64",
+  "channel": "stable",
+  "version": "1.0.1",
+  "latest_version": "1.0.1",
+  "mandatory": false,
+  "is_mandatory": false,
+  "release_notes": "• Improved custom billing & history sync\n• Auto-naming invoice PDFs\n• Performance improvements",
+  "package_url": "https://billbackend.naiyo24.com/downloads/SirfBill_Setup_1.0.1.exe",
+  "download_url": "https://billbackend.naiyo24.com/downloads/SirfBill_Setup_1.0.1.exe",
+  "sha256": "",
+  "signature_url": ""
+}
