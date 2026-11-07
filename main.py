@@ -23,10 +23,28 @@ import sqlalchemy as sa
 # Create the tables automatically first time
 Base.metadata.create_all(bind=engine)
 
-# Auto-apply essential schema columns on startup
+# Auto-apply essential schema columns & performance indexes on startup
 try:
     with engine.begin() as conn:
         conn.execute(sa.text("ALTER TABLE shops ADD COLUMN IF NOT EXISTS account_holder_name VARCHAR;"))
+        # Enable pg_trgm for high-speed sub-millisecond full-text and pattern search
+        conn.execute(sa.text("CREATE EXTENSION IF NOT EXISTS pg_trgm;"))
+        
+        # High-performance GIN Trigram indexes on millions of rows
+        conn.execute(sa.text("CREATE INDEX IF NOT EXISTS idx_menu_items_name_trgm ON restaurant_menu_items USING gin (name gin_trgm_ops);"))
+        conn.execute(sa.text("CREATE INDEX IF NOT EXISTS idx_menu_items_shortcode_trgm ON restaurant_menu_items USING gin (short_code gin_trgm_ops);"))
+        conn.execute(sa.text("CREATE INDEX IF NOT EXISTS idx_menu_items_outlet_active ON restaurant_menu_items (outlet_id, is_active);"))
+
+        conn.execute(sa.text("CREATE INDEX IF NOT EXISTS idx_customers_name_trgm ON restaurant_customers USING gin (name gin_trgm_ops);"))
+        conn.execute(sa.text("CREATE INDEX IF NOT EXISTS idx_customers_phone_trgm ON restaurant_customers USING gin (phone gin_trgm_ops);"))
+        conn.execute(sa.text("CREATE INDEX IF NOT EXISTS idx_customers_outlet_active ON restaurant_customers (outlet_id, is_active);"))
+
+        conn.execute(sa.text("CREATE INDEX IF NOT EXISTS idx_orders_outlet_status ON restaurant_orders (outlet_id, status);"))
+        conn.execute(sa.text("CREATE INDEX IF NOT EXISTS idx_orders_customer_phone ON restaurant_orders (customer_phone);"))
+
+        conn.execute(sa.text("CREATE INDEX IF NOT EXISTS idx_users_name_trgm ON users USING gin (name gin_trgm_ops);"))
+        conn.execute(sa.text("CREATE INDEX IF NOT EXISTS idx_users_phone_trgm ON users USING gin (phone gin_trgm_ops);"))
+        conn.execute(sa.text("CREATE INDEX IF NOT EXISTS idx_users_tenant_role ON users (tenant_id, role);"))
 except Exception as e:
     print(f"Schema startup migration note: {e}")
 
