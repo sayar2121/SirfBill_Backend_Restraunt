@@ -1,5 +1,9 @@
+import os
+import logging
 import io
 import csv
+
+logger = logging.getLogger(__name__)
 import uuid
 from decimal import Decimal
 import python_calamine
@@ -912,31 +916,91 @@ async def bulk_upload_menu_items(
     }
 
 
+FALLBACK_FOOD_SVG = """<svg xmlns="http://www.w3.org/2000/svg" width="400" height="300" viewBox="0 0 400 300">
+  <rect width="100%" height="100%" fill="#1e293b"/>
+  <circle cx="200" cy="130" r="55" fill="#334155"/>
+  <path d="M175 140c0-14 11-25 25-25s25 11 25 25v5h-50v-5z" fill="#10b981"/>
+  <path d="M165 150h70v5h-70z" fill="#10b981"/>
+  <circle cx="200" cy="110" r="5" fill="#10b981"/>
+  <text x="200" y="225" font-family="sans-serif" font-size="16" font-weight="bold" fill="#94a3b8" text-anchor="middle">SirfBill Restaurant</text>
+</svg>"""
+
+IMAGE_CACHE_DIR = os.path.join("uploads", "cache")
+os.makedirs(IMAGE_CACHE_DIR, exist_ok=True)
+
+
 @router.api_route("/image-proxy", methods=["GET", "HEAD"])
 async def image_proxy(url: str = Query(...)):
     """
-    Proxy image requests to bypass browser CORS restrictions and cache images.
+    Proxy image requests to bypass browser CORS restrictions and cache images on disk.
+    If upstream times out or is unreachable, serves a clean placeholder image rather than a 500 error.
     """
     if not url:
         raise HTTPException(status_code=400, detail="URL is required")
-    try:
-        async with httpx.AsyncClient(follow_redirects=True, timeout=15.0) as client:
-            headers = {"User-Agent": "SirfBill/1.0 (https://sirfbill.com; dev@sirfbill.com)"}
-            resp = await client.get(url, headers=headers)
-            if resp.status_code != 200:
-                raise HTTPException(status_code=resp.status_code, detail="Failed to fetch image from upstream")
-            
-            content_type = resp.headers.get("content-type", "image/jpeg")
+
+    import hashlib
+    url_hash = hashlib.md5(url.encode("utf-8")).hexdigest()
+    cache_path = os.path.join(IMAGE_CACHE_DIR, f"{url_hash}.bin")
+    meta_path = os.path.join(IMAGE_CACHE_DIR, f"{url_hash}.meta")
+
+    # Serve from disk cache if already downloaded
+    if os.path.exists(cache_path) and os.path.exists(meta_path):
+        try:
+            with open(meta_path, "r", encoding="utf-8") as mf:
+                content_type = mf.read().strip() or "image/jpeg"
+            with open(cache_path, "rb") as cf:
+                cached_data = cf.read()
             return Response(
-                content=resp.content,
+                content=cached_data,
                 media_type=content_type,
                 headers={
                     "Cache-Control": "public, max-age=604800, immutable",
                     "Access-Control-Allow-Origin": "*",
                 }
             )
-    except HTTPException:
-        raise
+        except Exception:
+            pass
+
+    try:
+        # Fast 4-second connect timeout so upstream ISP/CDN routing hangs don't stall clients
+        async with httpx.AsyncClient(
+            follow_redirects=True,
+            timeout=httpx.Timeout(connect=4.0, read=8.0, write=4.0, pool=4.0)
+        ) as client:
+            headers = {
+                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+                "Accept": "image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8",
+            }
+            resp = await client.get(url, headers=headers)
+            if resp.status_code == 200 and resp.content:
+                content_type = resp.headers.get("content-type", "image/jpeg")
+                # Save to disk cache
+                try:
+                    with open(cache_path, "wb") as cf:
+                        cf.write(resp.content)
+                    with open(meta_path, "w", encoding="utf-8") as mf:
+                        mf.write(content_type)
+                except Exception:
+                    pass
+
+                return Response(
+                    content=resp.content,
+                    media_type=content_type,
+                    headers={
+                        "Cache-Control": "public, max-age=604800, immutable",
+                        "Access-Control-Allow-Origin": "*",
+                    }
+                )
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        logger.warning(f"image_proxy upstream fetch error for {url}: {e}")
+
+    # Return placeholder SVG so frontend displays a clean placeholder without breaking or logging 500s
+    return Response(
+        content=FALLBACK_FOOD_SVG.encode("utf-8"),
+        media_type="image/svg+xml",
+        headers={
+            "Cache-Control": "public, max-age=86400",
+            "Access-Control-Allow-Origin": "*",
+        }
+    )
 
