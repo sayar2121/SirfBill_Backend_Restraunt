@@ -2,13 +2,13 @@
   "product_id": "sirfbill-restaurant",
   "platform": "windows-x64",
   "channel": "stable",
-  "version": "1.0.10",
-  "latest_version": "1.0.10",
+  "version": "1.0.13",
+  "latest_version": "1.0.13",
   "mandatory": false,
   "is_mandatory": false,
-  "release_notes": "• SirfBill Restaurant Release v1.0.10\n• Dine-in Table billing & pre-payment bill check\n• Auto updater and stability enhancements",
-  "package_url": "https://github.com/sayar2121/SirfBill_Restraunt/releases/download/v1.0.10/app-update.zip",
-  "download_url": "https://github.com/sayar2121/SirfBill_Restraunt/releases/download/v1.0.10/Sirfbill_Restaurant_Setup.exe",
+  "release_notes": "• SirfBill Restaurant Release v1.0.13\n• Performance and auto-update enhancements",
+  "package_url": "https://github.com/sayar2121/SirfBill_Restraunt/releases/download/v1.0.13/app-update.zip",
+  "download_url": "https://github.com/sayar2121/SirfBill_Restraunt/releases/download/v1.0.13/Sirfbill_Restaurant_Setup.exe",
   "sha256": "",
   "signature_url": ""
 }
