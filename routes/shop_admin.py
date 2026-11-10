@@ -93,6 +93,12 @@ async def create_shop(
             "username": f"{safe_code}_crm",
             "password": default_pass,
             "role": "MANAGER"
+        },
+        "waiter": {
+            "name": f"{request.name} Waiter / Captain",
+            "username": f"{safe_code}_waiter",
+            "password": default_pass,
+            "role": "WAITER"
         }
     }
     extra["module_accounts"] = module_accounts
