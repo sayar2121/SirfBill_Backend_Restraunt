@@ -21,6 +21,7 @@ class UserBase(BaseModel):
     phone: str
     name: str
     email: Optional[str] = None
+    password: Optional[str] = None    # Plaintext station password for admin credentials panel
     avatar_url: Optional[str] = None
     saved_addresses: Optional[Any] = None
     is_active: Optional[bool] = True
