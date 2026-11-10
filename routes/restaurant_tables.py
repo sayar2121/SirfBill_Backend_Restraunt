@@ -47,12 +47,12 @@ def get_tables(
     if not tables:
         return []
 
-    # Map active orders for occupied tables
+    # Map active orders for occupied tables (including OPEN, SENT_TO_KITCHEN, HOLD, SERVED awaiting settlement)
     active_orders = (
         db.query(RestaurantOrder)
         .filter(RestaurantOrder.outlet_id == outlet_id)
         .filter(RestaurantOrder.table_id.isnot(None))
-        .filter(RestaurantOrder.status.in_(["OPEN", "SENT_TO_KITCHEN"]))
+        .filter(RestaurantOrder.status.in_(["OPEN", "SENT_TO_KITCHEN", "HOLD", "SERVED"]))
         .order_by(RestaurantOrder.created_at.asc())
         .all()
     )
@@ -154,7 +154,7 @@ def update_table(
             active_orders = (
                 db.query(RestaurantOrder)
                 .filter(RestaurantOrder.table_id == table_id)
-                .filter(RestaurantOrder.status.in_(["OPEN", "SENT_TO_KITCHEN"]))
+                .filter(RestaurantOrder.status.in_(["OPEN", "SENT_TO_KITCHEN", "HOLD", "SERVED"]))
                 .all()
             )
             for act_ord in active_orders:
@@ -193,7 +193,7 @@ def update_table_status(
             active_orders = (
                 db.query(RestaurantOrder)
                 .filter(RestaurantOrder.table_id == table_id)
-                .filter(RestaurantOrder.status.in_(["OPEN", "SENT_TO_KITCHEN"]))
+                .filter(RestaurantOrder.status.in_(["OPEN", "SENT_TO_KITCHEN", "HOLD", "SERVED"]))
                 .all()
             )
             for act_ord in active_orders:
@@ -243,7 +243,7 @@ def open_table_order(
     existing_order = (
         db.query(RestaurantOrder)
         .filter(RestaurantOrder.table_id == table_id)
-        .filter(RestaurantOrder.status.in_(["OPEN", "SENT_TO_KITCHEN"]))
+        .filter(RestaurantOrder.status.in_(["OPEN", "SENT_TO_KITCHEN", "HOLD", "SERVED"]))
         .first()
     )
     if existing_order:

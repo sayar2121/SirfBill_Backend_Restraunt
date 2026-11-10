@@ -292,13 +292,14 @@ def get_active_order_by_table(
 ):
     """
     Fetch the currently active live bill/order for a seated table.
+    Includes OPEN, SENT_TO_KITCHEN, and SERVED orders awaiting settlement.
     Returns None if no active order is currently on this table.
     """
     order = (
         db.query(RestaurantOrder)
         .options(joinedload(RestaurantOrder.lines))
         .filter(RestaurantOrder.table_id == table_id)
-        .filter(RestaurantOrder.status.in_(["OPEN", "SENT_TO_KITCHEN"]))
+        .filter(RestaurantOrder.status.in_(["OPEN", "SENT_TO_KITCHEN", "HOLD", "SERVED"]))
         .order_by(RestaurantOrder.created_at.desc())
         .first()
     )
@@ -342,12 +343,13 @@ def update_order_items(
     if order.status in ["COMPLETED", "CANCELLED", "VOIDED"]:
         raise HTTPException(status_code=400, detail=f"Cannot add items to an order in {order.status} state")
 
-    # Optimistic locking check
-    if order.version != payload.expected_version:
-        raise HTTPException(
-            status_code=status.HTTP_409_CONFLICT,
-            detail=f"Concurrency conflict: Order version is {order.version}, but client expected {payload.expected_version}. Please refresh."
-        )
+    # Optimistic locking check (allow -1 or null to bypass strict check)
+    if payload.expected_version is not None and payload.expected_version != -1:
+        if order.version != payload.expected_version:
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail=f"Concurrency conflict: Order version is {order.version}, but client expected {payload.expected_version}. Please refresh."
+            )
 
     subtotal_acc = Decimal("0.00")
     tax_acc = Decimal("0.00")
