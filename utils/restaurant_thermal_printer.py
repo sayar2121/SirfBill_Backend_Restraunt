@@ -214,6 +214,23 @@ def generate_bill_pdf(order, outlet, table_name="Takeaway") -> str:
         leading=11,
         alignment=2
     )
+    brand_title = ParagraphStyle(
+        'BrandTitle',
+        parent=styles['Normal'],
+        fontName='Helvetica-Bold',
+        fontSize=8.5,
+        leading=10,
+        alignment=1
+    )
+    brand_sub = ParagraphStyle(
+        'BrandSub',
+        parent=styles['Normal'],
+        fontName='Helvetica',
+        fontSize=7,
+        leading=9,
+        alignment=1,
+        textColor=colors.HexColor('#4B5563')
+    )
 
     elements = []
 
@@ -348,15 +365,18 @@ def generate_bill_pdf(order, outlet, table_name="Takeaway") -> str:
     ]))
     elements.append(t_sum)
 
-    # Footer greetings
+    # Footer greetings & Branding
     elements.append(HRFlowable(width="100%", thickness=1, color=colors.black, spaceBefore=3*mm, spaceAfter=2*mm))
     elements.append(Paragraph("THANK YOU FOR DINING WITH US!", center_bold))
     elements.append(Paragraph("Please visit again", center_sub))
+    elements.append(Spacer(1, 2.5 * mm))
+    elements.append(Paragraph("<b>Sirfbill</b>", brand_title))
+    elements.append(Paragraph("Powered By Naiyo24 Pvt. Ltd.", brand_sub))
 
     # Dynamic height calculation to guarantee continuous fit on ONE roll page without large trailing gaps:
-    # Header: ~32mm, Meta: ~18mm, Items: ~5.5mm/item, Summary: ~20mm, Footer: ~12mm
+    # Header: ~32mm, Meta: ~18mm, Items: ~5.5mm/item, Summary: ~20mm, Footer: ~20mm
     num_items = len(consolidated_lines) if consolidated_lines else 1
-    doc_height = max(150, (135 + (num_items * 9.0))) * mm
+    doc_height = max(160, (145 + (num_items * 9.0))) * mm
     doc = SimpleDocTemplate(
         file_path,
         pagesize=(RECEIPT_WIDTH, doc_height),
