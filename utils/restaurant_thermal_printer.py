@@ -335,7 +335,9 @@ def generate_bill_pdf(order, outlet, table_name="Takeaway") -> str:
     elements.append(HRFlowable(width="100%", thickness=0.8, color=colors.black, spaceBefore=2*mm, spaceAfter=2*mm))
 
     # Financial Summary
+    total_qty = sum(item['qty'] for item in consolidated_lines.values())
     summary_data = [
+        [Paragraph("Total Qty:", left_regular), Paragraph(str(total_qty), right_regular)],
         [Paragraph("Subtotal:", left_regular), Paragraph(f"Rs. {float(order.subtotal):.2f}", right_regular)]
     ]
     if order.discount_amount and float(order.discount_amount) > 0:
